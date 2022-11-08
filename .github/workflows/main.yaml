@@ -4,7 +4,7 @@ name: newspaper_scraper
 # Controls when the action will run.
 on:
   schedule:
-    - cron: '5 * * * *'
+    - cron: '0 * * * *'
 
 jobs:
   autoscrape:
@@ -23,14 +23,15 @@ jobs:
         R -e 'install.packages("rvest")'
     # Run R script
     - name: Scrape
-      run: Rscript R/get_all_data.R
+      run: |
+        R -e "R/get_all_data.R"
 
     # Add new files in data folder, commit along with other modified files, push
     - name: Commit files
       run: |
         git config --local user.name github-actions
         git config --local user.email "actions@github.com"
-        git add data/*
+        git add data_raw/*
         git commit -am "GH ACTION Autorun $(date)"
         git push origin main
       env:
