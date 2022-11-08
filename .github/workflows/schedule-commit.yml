@@ -4,7 +4,7 @@ on:
 
 jobs:
   generate-data:
-    runs-on: ${{ matrix.config.os }}
+    runs-on: windows-latest
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
