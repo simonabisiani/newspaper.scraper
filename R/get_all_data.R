@@ -19,9 +19,9 @@ scraper <- function(urls) {
     html_text() %>%
     as.data.frame() %>%
     mutate(
-      publication = gsub(" \\(.*", "", .),
-      publisher = gsub(".*\\(", "", .),
-      publisher = gsub("\\)", "", publisher)
+      Publication = gsub("\\) \\(.*", "", .),
+      Publisher = gsub(".*\\(", "", .),
+      Publisher = gsub("\\)", "", Publisher)
     ) %>%
     select(-.)
 }
@@ -31,7 +31,7 @@ ipso_members <- map_dfr(urls, scraper)
 
 write.csv(ipso_members,
           file = paste0("data_raw/ipso_members_",
-                        make.names(Sys.date()), ".csv"))
+                        make.names(Sys.Date()), ".csv"))
 
 
 # HFTP #########################################################################
@@ -49,13 +49,13 @@ urls <- paste0(root_url,
 pager <- function(page) {
   doc <- read_html(url(page))
   data.frame(
-    Publication = doc %>% html_elements(".pf-content") %>% 
-      html_elements("li") %>% 
+    Publication = doc %>% html_elements(".pf-content") %>%
+      html_elements("li") %>%
       html_text(),
-    Website = doc %>% html_elements(".pf-content") %>% 
-      html_elements("li") %>% html_element("a") %>% 
+    Website = doc %>% html_elements(".pf-content") %>%
+      html_elements("li") %>% html_element("a") %>%
       html_attr("href"),
-    Type = doc %>% html_elements(".entry-title") %>% 
+    Type = doc %>% html_elements(".entry-title") %>%
       html_text()
   )
 }
@@ -71,10 +71,10 @@ hyperlocals <-
 hl <-
   data.frame(
     Publication <-
-      read_html(hyperlocals) %>% html_elements("td:nth-child(1)") %>% 
+      read_html(hyperlocals) %>% html_elements("td:nth-child(1)") %>%
       html_text(),
     Website <-
-      read_html(hyperlocals) %>% html_elements("td:nth-child(2)") %>% 
+      read_html(hyperlocals) %>% html_elements("td:nth-child(2)") %>%
       html_element("a") %>% html_attr("href"),
     Type <- "Hyperlocal publications"
   )
@@ -88,7 +88,7 @@ write.csv(htfp_database,
           paste0("data_raw/htfp_directory_", make.names(Sys.Date()), ".csv"))
 
 
-# IMPRESS #########################################################################
+# IMPRESS ######################################################################
 
 # generate urls
 url <- "https://www.impress.press/regulated-publications/"
@@ -104,8 +104,33 @@ scraper_impress <- function(url) {
 
 # iterate over the urls
 impress_members <- as.data.frame(scraper_impress(url)) %>%
-  rename("publisher" = "scraper_impress(url)")
+  rename("Publication" = "scraper_impress(url)")
 
 write.csv(impress_members,
           paste0("data_raw/impress_members_", make.names(Sys.Date()), ".csv"))
+
+
+
+# MERGE ########################################################################
+
+library(fuzzyjoin)
+
+impress_members$Impress <- 1
+ipso_members$Ipso <- 1
+htfp_database$Htfp <- 1
+
+directory <- full_join(htfp_database, ipso_members, by = "Publication") |>
+  full_join(impress_members, by = "Publication")
+
+test <- directory |>
+  mutate(Mode = case_when(
+    str_detect(Publication, "online") ~ "Online",
+    str_detect(Publication, "print") ~ "Print",
+    TRUE ~ "Unknown"
+  ),
+  Publication = gsub("\\(print.*|\\(onl.*", "", Publication)
+  )
+
+count(count(test, Publication, Type), n)
+
 
