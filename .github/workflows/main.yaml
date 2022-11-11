@@ -23,9 +23,8 @@ jobs:
         R -e 'install.packages("rvest")'
     # Run R script
     - name: Scrape
-      run: |
-        R -e 'run("get_all_data.R")'
-
+      run: Rscript get_all_data.R
+      
     # Add new files in data folder, commit along with other modified files, push
     - name: Commit files
       run: |
