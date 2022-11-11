@@ -21,7 +21,8 @@ jobs:
         R -e 'install.packages("tidyverse")'
         R -e 'install.packages("purrr")'
         R -e 'install.packages("rvest")'
-    # Run R script
+        R -e 'install.packages("fuzzyjoin")'
+# Run R script
     - name: Scrape
       run: Rscript get_all_data.R
       
